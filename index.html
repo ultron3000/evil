@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resident Evil Universe</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #e50914;
+      --secondary: #b81d24;
+      --accent: #f5f5f1;
+      --dark: #221f1f;
+      --darker: #141414;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+      color: var(--accent);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .movie-card {
+      transition: all 0.3s ease;
+      transform-origin: center;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 100%);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .movie-card:hover {
+      transform: scale(1.05) translateY(-10px);
+      box-shadow: 0 15px 30px rgba(229, 9, 20, 0.3);
+      z-index: 10;
+    }
+    
+    .movie-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      z-index: 1;
+    }
+    
+    .movie-poster {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .movie-poster img {
+      transition: transform 0.5s ease;
+    }
+    
+    .movie-card:hover .movie-poster img {
+      transform: scale(1.1);
+    }
+    
+    .movie-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .movie-card:hover .movie-overlay {
+      opacity: 1;
+    }
+    
+    .scrollbar::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    .scrollbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+    
+    .scrollbar::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 10px;
+    }
+    
+    .scrollbar::-webkit-scrollbar-thumb:hover {
+      background: var(--secondary);
+    }
+    
+    .search-input:focus {
+      box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.3);
+    }
+    
+    .filter-btn.active {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .skeleton {
+      animation: skeleton-loading 1s linear infinite alternate;
+    }
+    
+    @keyframes skeleton-loading {
+      0% {
+        background-color: hsl(200, 20%, 20%);
+      }
+      100% {
+        background-color: hsl(200, 20%, 35%);
+      }
+    }
+    
+    /* Blood splatter effect */
+    .blood-splatter {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path fill="rgba(229,9,20,0.05)" d="M30,15 Q40,5 50,15 T70,15 Q80,25 70,35 T70,55 Q60,65 50,55 T30,55 Q20,45 30,35 T30,15"/></svg>');
+      background-size: 100px 100px;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .movie-card {
+        width: 160px;
+      }
+      
+      .movie-title {
+        font-size: 0.9rem;
+      }
+      
+      .filters-container {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 10px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .movie-card {
+        width: 140px;
+      }
+      
+      .header-title {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body class="relative">
+  <!-- Blood splatter background effect -->
+  <div class="blood-splatter"></div>
+  
+  <!-- Main container -->
+  <div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="flex flex-col items-center mb-10">
+      <div class="flex items-center justify-center mb-6">
+        <i class="fas fa-biohazard text-5xl text-red-600 mr-4 animate-pulse"></i>
+        <h1 class="header-title text-4xl md:text-5xl font-bold bg-gradient-to-r from-red-600 via-red-500 to-red-400 bg-clip-text text-transparent">
+          RESIDENT EVIL UNIVERSE
+        </h1>
+      </div>
+      
+      <p class="text-gray-400 text-center max-w-2xl mb-8">
+        Explore the complete collection of Resident Evil movies and animations. 
+        From Raccoon City to global bioterrorism, experience the Umbrella Corporation's legacy.
+      </p>
+      
+      <!-- Search bar -->
+      <div class="w-full max-w-2xl relative mb-8">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <i class="fas fa-search text-gray-500"></i>
+        </div>
+        <input 
+          id="searchBar" 
+          type="text" 
+          placeholder="Search Resident Evil movies..." 
+          class="search-input w-full pl-10 pr-4 py-3 rounded-lg bg-gray-900 border border-gray-700 focus:border-red-500 focus:outline-none text-white transition-all duration-200"
+        >
+        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+          <button id="clearSearch" class="text-gray-500 hover:text-white hidden">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Filters -->
+      <div class="filters-container w-full mb-8">
+        <div class="flex flex-wrap justify-center gap-2">
+          <button class="filter-btn active px-4 py-2 rounded-full bg-gray-800 text-white hover:bg-red-600 transition-all" data-filter="all">
+            <i class="fas fa-list mr-2"></i>All
+          </button>
+          <button class="filter-btn px-4 py-2 rounded-full bg-gray-800 text-white hover:bg-red-600 transition-all" data-filter="movie">
+            <i class="fas fa-film mr-2"></i>Live Action
+          </button>
+          <button class="filter-btn px-4 py-2 rounded-full bg-gray-800 text-white hover:bg-red-600 transition-all" data-filter="animation">
+            <i class="fas fa-vr-cardboard mr-2"></i>Animations
+          </button>
+          <button class="filter-btn px-4 py-2 rounded-full bg-gray-800 text-white hover:bg-red-600 transition-all" data-filter="latest">
+            <i class="fas fa-calendar-star mr-2"></i>Latest
+          </button>
+          <button class="filter-btn px-4 py-2 rounded-full bg-gray-800 text-white hover:bg-red-600 transition-all" data-filter="classic">
+            <i class="fas fa-history mr-2"></i>Classics
+          </button>
+        </div>
+      </div>
+      
+      <!-- Sort options -->
+      <div class="flex items-center justify-center mb-6">
+        <span class="text-gray-400 mr-2"><i class="fas fa-sort-amount-down"></i> Sort by:</span>
+        <select id="sortOptions" class="bg-gray-900 border border-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:border-red-500">
+          <option value="default">Default</option>
+          <option value="title-asc">Title (A-Z)</option>
+          <option value="title-desc">Title (Z-A)</option>
+          <option value="year-asc">Release Year (Oldest)</option>
+          <option value="year-desc">Release Year (Newest)</option>
+        </select>
+      </div>
+    </header>
+    
+    <!-- Main content -->
+    <main>
+      <!-- Stats bar -->
+      <div class="flex justify-between items-center mb-6 px-2">
+        <div class="text-gray-400">
+          <span id="movieCount" class="font-bold text-white">0</span> movies found
+        </div>
+        <div class="flex items-center">
+          <span class="text-gray-400 mr-2"><i class="fas fa-eye"></i> View:</span>
+          <button id="gridView" class="p-2 rounded-lg bg-red-600 text-white mr-2">
+            <i class="fas fa-th-large"></i>
+          </button>
+          <button id="listView" class="p-2 rounded-lg bg-gray-800 text-white">
+            <i class="fas fa-list"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Movie grid -->
+      <div id="movies" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"></div>
+      
+      <!-- Loading skeleton -->
+      <div id="loadingSkeleton" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+        <!-- Skeleton placeholders -->
+        <div class="movie-card skeleton h-64 rounded-lg"></div>
+        <div class="movie-card skeleton h-64 rounded-lg"></div>
+        <div class="movie-card skeleton h-64 rounded-lg"></div>
+        <div class="movie-card skeleton h-64 rounded-lg"></div>
+        <div class="movie-card skeleton h-64 rounded-lg"></div>
+        <div class="movie-card skeleton h-64 rounded-lg"></div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Footer -->
+  <footer class="bg-gray-900 py-8 mt-12">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <h2 class="text-xl font-bold text-white mb-2">RESIDENT EVIL UNIVERSE</h2>
+          <p class="text-gray-400">The complete collection of Umbrella Corporation's legacy</p>
+        </div>
+        <div class="flex space-x-4">
+          <a href="#" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fab fa-facebook-f"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fab fa-twitter"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fab fa-youtube"></i>
+          </a>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 mt-6 pt-6 text-center text-gray-500 text-sm">
+        <p>© 2023 Resident Evil Universe. All rights reserved. This is a fan-made project.</p>
+      </div>
+    </div>
+  </footer>
+  
+  <script>
+    // Movie data with additional details
+    const movies = [
+      { 
+        title: "Resident Evil", 
+        video: "https://skra.cuevasafrtba.sbs:443/v4/vz/jwe3y/index-f1-v1-a1.txt", 
+        image: "https://image.tmdb.org/t/p/original/1UKNef590A0ZaMnxsscIcWuK1Em.jpg",
+        year: 2002,
+        type: "movie",
+        duration: "100 min",
+        rating: 6.6,
+        description: "A special military unit fights a powerful, out-of-control supercomputer and hundreds of scientists who have mutated into flesh-eating creatures after a laboratory accident."
+      },
+      { 
+        title: "Resident Evil: Apocalypse", 
+        video: "https://skra.hlmarkscadei.sbs/v4/m9/rv5mk/index-f2-v1.txt", 
+        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdiiX0YCOeVMurh1l47oZt1abtBnz3XUiyww&s",
+        year: 2004,
+        type: "movie",
+        duration: "94 min",
+        rating: 6.1,
+        description: "Alice awakes in Raccoon City, only to find it has become infested with zombies and monsters. With the help of Jill Valentine and Carlos Olivera, Alice must find a way out."
+      },
+      { 
+        title: "Resident Evil: Extinction", 
+        video: "https://skra.parrishiadedeau.sbs:443/v4/qu/xqvpy/index-f2-v1-a1.txt", 
+        image: "https://lh3.googleusercontent.com/proxy/caKWq0vkTBd36ZW-Rb6l0xQr1HfLZMY6mqWmarB8CU8AF74aRGVykn16pScbOpbpAwioJZlYaq77j15uplBD-TbZwTcwAzL7VtVvMH1klHxdsHQNE_lDW6nO",
+        year: 2007,
+        type: "movie",
+        duration: "94 min",
+        rating: 6.0,
+        description: "Survivors of the Raccoon City catastrophe travel across the Nevada desert, hoping to make it to Alaska. Alice joins them and together they fight the undead and the evil Umbrella Corporation."
+      },
+      { 
+        title: "Resident Evil: Afterlife", 
+        video: "https://sdqm.selmagwayl.sbs:443/v4/9a/ecvbb/index-f2-v1-a1.txt", 
+        image: "https://image.tmdb.org/t/p/original/qf8XoYwhPuk7omhcSdvAH2742my.jpg",
+        year: 2010,
+        type: "movie",
+        duration: "97 min",
+        rating: 5.8,
+        description: "While still out to destroy the evil Umbrella Corporation, Alice joins a group of survivors living in a prison surrounded by the infected who also want to relocate to the mysterious but supposedly unharmed safe haven known only as Arcadia."
+      },
+      { 
+        title: "Resident Evil: Retribution", 
+        video: "https://s9dz.selmagwayl.sbs:443/v4/ck/5i58z/index-f2-v1-a1.txt", 
+        image: "https://m.media-amazon.com/images/I/71mgrPbwftL._AC_UF894,1000_QL80_.jpg",
+        year: 2012,
+        type: "movie",
+        duration: "96 min",
+        rating: 5.7,
+        description: "Alice fights alongside a resistance movement in the continuing battle against the Umbrella Corporation and the undead."
+      },
+      { 
+        title: "Resident Evil: The Final Chapter", 
+        video: "https://sojg.southerlandeya.sbs:443/v4/db/daewf/index-f2-v1-a1.txt", 
+        image: "https://cdn11.bigcommerce.com/s-yzgoj/images/stencil/1280x1280/products/2904782/5971629/MOVAB39355__60101.1679612811.jpg?c=2",
+        year: 2016,
+        type: "movie",
+        duration: "107 min",
+        rating: 5.9,
+        description: "Alice returns to where the nightmare began - The Hive in Raccoon City, where the Umbrella Corporation is gathering its forces for a final strike against the only remaining survivors of the apocalypse."
+      },
+      { 
+        title: "Resident Evil: Degeneration", 
+        video: "https://spuc.baugherhatchp.sbs:443/v4/us/m866o/index-f2-v1-a1.txt", 
+        image: "https://i.pinimg.com/474x/5d/45/8e/5d458e318ee7195665c6f1e29d3cddf5.jpg",
+        year: 2008,
+        type: "animation",
+        duration: "97 min",
+        rating: 6.4,
+        description: "Set between Resident Evil 4 and Resident Evil 5, Leon S. Kennedy and Claire Redfield must contain a zombie outbreak at an airport."
+      },
+      { 
+        title: "Resident Evil: Damnation", 
+        video: "https://scvo.griseldakro.sbs:443/v4/ck/mrej3/index-f2-v1-a1.txt", 
+        image: "https://image.tmdb.org/t/p/original/yhokCOGRDEaldBUkqNOYVbRvdga.jpg",
+        year: 2012,
+        type: "animation",
+        duration: "100 min",
+        rating: 6.5,
+        description: "Leon S. Kennedy enters a war-torn Eastern European country to investigate rumors of bio-organic weapons being used in the conflict."
+      },
+      { 
+        title: "Resident Evil: Vendetta", 
+        video: "https://sr81.bradburyg.sbs:443/v4/36/etzps/index-f1-v1-a1.txt", 
+        image: "https://s.movieinsider.com/images/p/427657_m1490066414.jpg",
+        year: 2017,
+        type: "animation",
+        duration: "97 min",
+        rating: 6.3,
+        description: "BSAA agent Chris Redfield enlists the help of Leon S. Kennedy and Rebecca Chambers to stop a death merchant with a vengeance from spreading a deadly virus in New York."
+      },
+      { 
+        title: "Resident Evil: Welcome to Raccoon City", 
+        video: "https://sxic.baugherhatchp.sbs:443/v4/ty/hdeix/index-f2-v1-a1.txt", 
+        image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNEn__aJHfXzZD3AHvYKR8WUSVtXCkPR6rJg&s",
+        year: 2021,
+        type: "movie",
+        duration: "107 min",
+        rating: 5.4,
+        description: "Set in 1998, this origin story explores the secrets of the mysterious Spencer Mansion and the ill-fated Raccoon City."
+      },
+      { 
+        title: "Resident Evil: Death Island", 
+        video: "https://sojg.sewwhitema.sbs:443/v4/il/qa1x3/index-f2-v1-a1.txt", 
+        image: "https://m.media-amazon.com/images/M/MV5BNzg0OWYwOTMtYjVhNy00NzY0LWJiYTMtMGQ3OTczMmEwZmVhXkEyXkFqcGc@._V1_.jpg",
+        year: 2023,
+        type: "animation",
+        duration: "87 min",
+        rating: 6.8,
+        description: "Leon S. Kennedy, Chris Redfield, and Jill Valentine team up to investigate a zombie outbreak on Alcatraz Island."
+      },
+    ];
+
+    // DOM elements
+    const container = document.getElementById('movies');
+    const loadingSkeleton = document.getElementById('loadingSkeleton');
+    const searchBar = document.getElementById('searchBar');
+    const clearSearch = document.getElementById('clearSearch');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const sortOptions = document.getElementById('sortOptions');
+    const movieCount = document.getElementById('movieCount');
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+
+    // Current view mode (grid or list)
+    let currentView = 'grid';
+
+    // Initialize the app
+    function init() {
+      // Simulate loading delay
+      setTimeout(() => {
+        loadingSkeleton.style.display = 'none';
+        renderMovies(movies);
+        updateMovieCount(movies.length);
+      }, 800);
+      
+      // Set up event listeners
+      setupEventListeners();
+    }
+
+    // Render movies to the DOM
+    function renderMovies(moviesToRender) {
+      container.innerHTML = '';
+      
+      moviesToRender.forEach((movie, index) => {
+        const movieCard = document.createElement('div');
+        movieCard.className = `movie-card ${currentView === 'grid' ? 'w-full' : 'w-full flex'} relative overflow-hidden group`;
+        
+        movieCard.innerHTML = `
+          <div class="movie-poster ${currentView === 'grid' ? 'aspect-[2/3]' : 'w-1/4 min-w-[200px]'} relative overflow-hidden">
+            <img src="${movie.image}" alt="${movie.title}" class="w-full h-full object-cover">
+            <div class="movie-overlay">
+              <div class="flex items-center mb-2">
+                <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded mr-2">${movie.rating}/10</span>
+                <span class="text-white text-xs">${movie.year}</span>
+              </div>
+              <p class="text-white text-sm line-clamp-3">${movie.description}</p>
+            </div>
+          </div>
+          <div class="${currentView === 'grid' ? 'p-3' : 'p-4 flex-1'}">
+            <h3 class="movie-title font-bold text-white mb-1">${movie.title}</h3>
+            <div class="flex items-center text-gray-400 text-sm">
+              <span class="mr-3"><i class="fas fa-clock mr-1"></i> ${movie.duration}</span>
+              <span><i class="fas fa-film mr-1"></i> ${movie.type === 'movie' ? 'Live Action' : 'Animation'}</span>
+            </div>
+            <div class="mt-3">
+              <button class="play-btn w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center justify-center transition-colors">
+                <i class="fas fa-play mr-2"></i> Watch Now
+              </button>
+            </div>
+          </div>
+        `;
+        
+        movieCard.querySelector('.play-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          playMovie(movie);
+        });
+        
+        movieCard.addEventListener('click', () => {
+          viewMovieDetails(movie);
+        });
+        
+        container.appendChild(movieCard);
+      });
+    }
+
+    // Play movie function
+    function playMovie(movie) {
+      const url = `player.html?title=${encodeURIComponent(movie.title)}&video=${encodeURIComponent(movie.video)}`;
+      window.location.href = url;
+    }
+
+    // View movie details (would be a modal in a complete implementation)
+    function viewMovieDetails(movie) {
+      alert(`Viewing details for: ${movie.title}\n\n${movie.description}`);
+    }
+
+    // Filter movies based on search term
+    function filterMovies() {
+      const searchTerm = searchBar.value.toLowerCase();
+      const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+      
+      let filteredMovies = movies.filter(movie => {
+        const matchesSearch = movie.title.toLowerCase().includes(searchTerm);
+        let matchesFilter = true;
+        
+        switch(activeFilter) {
+          case 'movie':
+            matchesFilter = movie.type === 'movie';
+            break;
+          case 'animation':
+            matchesFilter = movie.type === 'animation';
+            break;
+          case 'latest':
+            matchesFilter = movie.year >= 2015;
+            break;
+          case 'classic':
+            matchesFilter = movie.year < 2010;
+            break;
+        }
+        
+        return matchesSearch && matchesFilter;
+      });
+      
+      // Sort movies
+      const sortValue = sortOptions.value;
+      filteredMovies = sortMovies(filteredMovies, sortValue);
+      
+      renderMovies(filteredMovies);
+      updateMovieCount(filteredMovies.length);
+    }
+
+    // Sort movies based on selected option
+    function sortMovies(moviesToSort, sortValue) {
+      switch(sortValue) {
+        case 'title-asc':
+          return [...moviesToSort].sort((a, b) => a.title.localeCompare(b.title));
+        case 'title-desc':
+          return [...moviesToSort].sort((a, b) => b.title.localeCompare(a.title));
+        case 'year-asc':
+          return [...moviesToSort].sort((a, b) => a.year - b.year);
+        case 'year-desc':
+          return [...moviesToSort].sort((a, b) => b.year - a.year);
+        default:
+          return moviesToSort;
+      }
+    }
+
+    // Update movie count display
+    function updateMovieCount(count) {
+      movieCount.textContent = count;
+    }
+
+    // Set up all event listeners
+    function setupEventListeners() {
+      // Search functionality
+      searchBar.addEventListener('input', () => {
+        filterMovies();
+        clearSearch.style.display = searchBar.value ? 'block' : 'none';
+      });
+      
+      clearSearch.addEventListener('click', () => {
+        searchBar.value = '';
+        filterMovies();
+        clearSearch.style.display = 'none';
+        searchBar.focus();
+      });
+      
+      // Filter buttons
+      filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          filterButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          filterMovies();
+        });
+      });
+      
+      // Sort options
+      sortOptions.addEventListener('change', () => {
+        filterMovies();
+      });
+      
+      // View mode toggle
+      gridView.addEventListener('click', () => {
+        if (currentView !== 'grid') {
+          currentView = 'grid';
+          gridView.classList.add('bg-red-600');
+          gridView.classList.remove('bg-gray-800');
+          listView.classList.add('bg-gray-800');
+          listView.classList.remove('bg-red-600');
+          filterMovies();
+        }
+      });
+      
+      listView.addEventListener('click', () => {
+        if (currentView !== 'list') {
+          currentView = 'list';
+          listView.classList.add('bg-red-600');
+          listView.classList.remove('bg-gray-800');
+          gridView.classList.add('bg-gray-800');
+          gridView.classList.remove('bg-red-600');
+          filterMovies();
+        }
+      });
+    }
+
+    // Initialize the app
+    init();
+  </script>
+</body>
+</html>
